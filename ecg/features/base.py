@@ -1,4 +1,3 @@
-# ecg/features/base.py
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 
@@ -8,8 +7,6 @@ class FeatureExtractorBase(BaseEstimator, TransformerMixin):
 
 class MorphologyFeatures(FeatureExtractorBase):
     def transform(self, beats):
-        # beats: [n_beats, n_samples]
-        # Example minimal features: peak amp, width proxy, energy
         peak = beats.max(axis=1)
         trough = beats.min(axis=1)
         energy = (beats**2).sum(axis=1)

@@ -1,4 +1,3 @@
-# ecg/models/anomaly.py
 from sklearn.ensemble import IsolationForest
 
 class AnomalyIForest:
@@ -9,13 +8,11 @@ class AnomalyIForest:
         self.clf.fit(X); return self
 
     def predict_scores(self, X):
-        # Higher = more anomalous
         return -self.clf.score_samples(X)
 
     def predict(self, X, threshold=None):
         scores = self.predict_scores(X)
         if threshold is None:
-            # default: 95th percentile
             thr = np.percentile(scores, 95)
         else:
             thr = threshold

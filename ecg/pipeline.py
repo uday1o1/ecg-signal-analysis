@@ -1,4 +1,3 @@
-# ecg/pipeline.py
 from sklearn.pipeline import Pipeline
 from .preprocess import ECGPreprocessor
 from .peaks import RPeakDetector

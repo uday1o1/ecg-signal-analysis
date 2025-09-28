@@ -1,41 +1,48 @@
 import numpy as np
-from sklearn.base import BaseEstimator, TransformerMixin
+from pathlib import Path
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
 
-class MorphologyFeatures(BaseEstimator, TransformerMixin):
-    """
-    Minimal, fast beat-level features that work well on MIT-BIH:
-      - peak amplitude
-      - trough amplitude
-      - energy (L2)
-      - total variation (L1 of first difference)
-      - width proxy (samples above 20% dynamic range)
-    These are intentionally simple; scaling happens later in the sklearn pipeline.
-    """
-    def __init__(self, width_threshold=0.2, enforce_fixed_len=True):
-        self.width_threshold = width_threshold
-        self.enforce_fixed_len = enforce_fixed_len
+DATA = Path("data/mitbih_beats_360Hz.npz")
 
-    def fit(self, X, y=None):
-        return self
+def main():
+    assert DATA.exists(), f"Missing {DATA}. Run: python scripts/build_beats_mitbih.py"
+    D = np.load(DATA)
+    Xtr,ytr = D["Xtr"],D["ytr"]
+    Xva,yva = D["Xva"],D["yva"]
+    Xte,yte = D["Xte"],D["yte"]
 
-    def transform(self, beats):
-        # beats: ndarray [n_beats, n_samples], fixed-length windows
-        beats = np.asarray(beats)
-        if self.enforce_fixed_len and beats.ndim != 2:
-            raise ValueError("Expected 2D array [n_beats, n_samples].")
+    print("[load] shapes:",
+          {k:D[k].shape for k in ["Xtr","ytr","Xva","yva","Xte","yte"]},
+          flush=True)
 
-        peak = beats.max(axis=1)
-        trough = beats.min(axis=1)
-        energy = (beats ** 2).sum(axis=1)
-        l1 = np.abs(np.diff(beats, axis=1)).sum(axis=1)
+    def feat(X):
+        peak=X.max(1); trough=X.min(1)
+        energy=(X**2).sum(1); l1=np.abs(np.diff(X,1)).sum(1)
+        thr=(0.2*(peak-trough)+trough)[:,None]
+        above=(X>=thr)
+        left=above.argmax(1)
+        right=X.shape[1]-np.flip(above,1).argmax(1)
+        width=right-left
+        return np.c_[peak,trough,energy,l1,width].astype(np.float32)
 
-        # Width proxy: count consecutive samples above (trough + t*(peak-trough))
-        thr = (self.width_threshold * (peak - trough) + trough)[:, None]
-        above = beats >= thr
-        # leftmost True index
-        left = above.argmax(axis=1)
-        # rightmost True index (flip and find first True)
-        right = beats.shape[1] - np.flip(above, axis=1).argmax(axis=1)
-        width = right - left
+    Ftr, Fva, Fte = feat(Xtr), feat(Xva), feat(Xte)
+    print("[feat] Ftr/Fva/Fte:", Ftr.shape, Fva.shape, Fte.shape, flush=True)
 
-        return np.c_[peak, trough, energy, l1, width].astype(np.float32)
+    pipe = Pipeline([
+        ("scaler", StandardScaler()),
+        ("clf", LogisticRegression(max_iter=500, class_weight="balanced", multi_class="ovr"))
+    ])
+    pipe.fit(Ftr, ytr)
+    print("[train] done", flush=True)
+
+    print("\n[VAL] classification report")
+    print(classification_report(yva, pipe.predict(Fva), digits=3), flush=True)
+
+    print("\n[TEST] classification report")
+    print(classification_report(yte, pipe.predict(Fte), digits=3), flush=True)
+
+if __name__ == "__main__":
+    main()

@@ -1,4 +1,3 @@
-# ecg/preprocess.py
 import numpy as np
 from scipy.signal import butter, filtfilt, resample
 from sklearn.base import BaseEstimator, TransformerMixin

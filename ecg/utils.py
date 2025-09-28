@@ -1,4 +1,3 @@
-# ecg/utils.py
 import numpy as np, random
 def patient_split(record_ids, seed=13, test_frac=0.2, val_frac=0.2):
     ids = sorted(record_ids)

@@ -1,4 +1,3 @@
-# train_anomaly.py
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_auc_score, average_precision_score
@@ -12,9 +11,7 @@ Ftr = feat(Xtr_norm)
 clf = IsolationForest(n_estimators=300, contamination="auto", random_state=0).fit(Ftr)
 
 Fte = feat(Xte)
-scores = -clf.score_samples(Fte)  # higher = more anomalous
-y_bin = (yte!=0).astype(int)      # anomaly = non-N
+scores = -clf.score_samples(Fte)
+y_bin = (yte!=0).astype(int)
 print("AUROC:", roc_auc_score(y_bin, scores))
 print("AUPRC:", average_precision_score(y_bin, scores))
-
-# choose threshold at 95th percentile of normal validation scores if you want a binary alarm

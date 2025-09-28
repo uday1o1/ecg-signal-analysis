@@ -1,4 +1,3 @@
-# ecg/io.py
 from pathlib import Path
 import numpy as np, wfdb
 
@@ -11,15 +10,14 @@ AAMI_MAP = {
 }
 
 def load_record(record_path, lead=0):
-    rec = wfdb.rdsamp(str(record_path))
+    signals, fields = wfdb.rdsamp(str(record_path))
     ann = wfdb.rdann(str(record_path), extension='atr')
-    sig = rec.p_signals[:, lead].astype(np.float32)
-    fs = rec.fs
+    sig = signals[:, lead].astype(np.float32)
+    fs = fields['fs']
     r_locs = ann.sample.astype(int)
-    sym = np.array(ann.symbol)
-    # keep only symbols we know
-    keep = np.array([s in AAMI_MAP for s in sym])
-    return sig, fs, r_locs[keep], np.array([AAMI_MAP[s] for s in sym[keep]])
+    symbols = np.array(ann.symbol)
+    keep = np.array([s in AAMI_MAP for s in symbols])
+    return sig, fs, r_locs[keep], np.array([AAMI_MAP[s] for s in symbols[keep]])
 
 def list_records(db_root="data/mitdb"):
     p = Path(db_root)

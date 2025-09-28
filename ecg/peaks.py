@@ -1,4 +1,3 @@
-# ecg/peaks.py
 import neurokit2 as nk
 from sklearn.base import BaseEstimator, TransformerMixin
 
