@@ -1,0 +1,58 @@
+# Data
+data:
+  hdf5: ./data/tracings.h5           # path to HDF5 with ECGs
+  dataset_name: tracings             # name of the HDF5 dataset
+  labels_csv: ./data/annotations/gold_standard.csv  # CSV with shape [N, 6]
+  # If you want to predict without labels, you can omit labels_csv on predict.
+  leads: 12
+  samples: 4096
+  scale_by_1000: true   # multiply by 1000 to match original 1e-4 V scaling
+
+# Splits (simple head/tail by fraction, deterministic)
+split:
+  val_fraction: 0.02
+  shuffle: true
+  seed: 42
+
+# Training
+train:
+  epochs: 50
+  batch_size: 64
+  num_workers: 4
+  lr: 0.001
+  weight_decay: 0.0
+  amp: true                # mixed precision
+  grad_clip_norm: 5.0      # 0 to disable
+  patience_lr: 7           # ReduceLROnPlateau patience
+  patience_es: 9           # early stop patience (on val loss)
+  checkpoint_dir: ./checkpoints
+
+# Model
+model:
+  n_classes: 6
+  stem_channels: 64
+  blocks:
+    - { out_channels: 128, stride: 4 }  # 4096 -> 1024
+    - { out_channels: 196, stride: 4 }  # 1024 -> 256
+    - { out_channels: 256, stride: 4 }  # 256  -> 64
+    - { out_channels: 320, stride: 4 }  # 64   -> 16
+  kernel_size: 16
+  dropout: 0.2
+  use_gap: true     # global average pool instead of flatten (smaller head)
+
+# Eval
+eval:
+  metric: auprc_macro  # selection metric: auprc_macro or auroc_macro
+
+# Predict
+predict:
+  batch_size: 32
+  num_workers: 4
+
+# Export
+export:
+  onnx: false
+  onnx_path: ./checkpoints/best.onnx
+
+# Misc
+device: auto   # "auto", "cuda", or "cpu"
