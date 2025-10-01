@@ -1,9 +1,0 @@
-numpy
-scipy
-pandas
-matplotlib
-wfdb
-neurokit2
-scikit-learn
-pywavelets
-lightgbm
