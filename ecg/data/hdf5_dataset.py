@@ -22,8 +22,7 @@ class HDF5ECG(Dataset):
     def __getitem__(self, i):
         j = self.start + i
         arr = np.array(self.x[j], dtype=self.dtype) * self.scale  # [4096,12]
-        # to torch shape [C, L] -> [12, 4096]
-        arr = np.transpose(arr, (1,0))
+        arr = np.transpose(arr, (1,0))  # [12,4096]
         x = torch.from_numpy(arr)
         if self.labels is None:
             return x

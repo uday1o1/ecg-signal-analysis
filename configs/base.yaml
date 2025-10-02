@@ -1,16 +1,16 @@
 # Data
 data:
-  hdf5: ./data/tracings.h5           # path to HDF5 with ECGs
-  dataset_name: tracings             # name of the HDF5 dataset
-  labels_csv: ./data/annotations/gold_standard.csv  # CSV with shape [N, 6]
-  # If you want to predict without labels, you can omit labels_csv on predict.
+  mode: sharded
+  exams_csv: ./data/code15/exams_part0.csv
+  h5_dir: ./data/code15
+  index_csv: ./data/code15/exams_part0_index.csv
   leads: 12
   samples: 4096
-  scale_by_1000: true   # multiply by 1000 to match original 1e-4 V scaling
+  scale_by_1000: true
 
 # Splits (simple head/tail by fraction, deterministic)
 split:
-  val_fraction: 0.02
+  val_fraction: 0.1
   shuffle: true
   seed: 42
 
@@ -18,10 +18,10 @@ split:
 train:
   epochs: 50
   batch_size: 64
-  num_workers: 4
+  num_workers: 0
   lr: 0.001
   weight_decay: 0.0
-  amp: true                # mixed precision
+  amp: false                # mixed precision
   grad_clip_norm: 5.0      # 0 to disable
   patience_lr: 7           # ReduceLROnPlateau patience
   patience_es: 9           # early stop patience (on val loss)
@@ -55,4 +55,6 @@ export:
   onnx_path: ./checkpoints/best.onnx
 
 # Misc
-device: auto   # "auto", "cuda", or "cpu"
+device: mps
+
+

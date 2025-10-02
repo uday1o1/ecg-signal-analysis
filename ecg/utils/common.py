@@ -33,9 +33,19 @@ def set_seed(seed: int):
     torch.backends.cudnn.benchmark = False
 
 def device_from_cfg(cfg):
-    if cfg.get("device","auto") == "auto":
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    return torch.device(cfg["device"])
+    want = cfg.get("device", "auto")
+    if want == "auto":
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return torch.device("mps")
+        return torch.device("cpu")
+    if want == "mps":
+        return torch.device("mps")
+    if want == "cuda":
+        return torch.device("cuda")
+    return torch.device("cpu")
+
 
 def ensure_dir(path):
     os.makedirs(path, exist_ok=True)
